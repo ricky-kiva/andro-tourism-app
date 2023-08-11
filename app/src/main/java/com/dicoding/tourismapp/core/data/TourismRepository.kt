@@ -8,6 +8,7 @@ import com.dicoding.tourismapp.core.data.source.local.entity.TourismEntity
 import com.dicoding.tourismapp.core.data.source.remote.RemoteDataSource
 import com.dicoding.tourismapp.core.data.source.remote.response.TourismResponse
 import com.dicoding.tourismapp.core.domain.model.Tourism
+import com.dicoding.tourismapp.core.domain.repository.ITourismRepository
 import com.dicoding.tourismapp.core.utils.AppExecutors
 import com.dicoding.tourismapp.core.utils.DataMapper
 
@@ -15,7 +16,7 @@ class TourismRepository private constructor(
     private val remoteDataSource: RemoteDataSource,
     private val localDataSource: LocalDataSource,
     private val appExecutors: AppExecutors
-) {
+): ITourismRepository {
 
     companion object {
         @Volatile
@@ -32,7 +33,7 @@ class TourismRepository private constructor(
     }
 
     // Get `Tourism` list from API & local database
-    fun getAllTourism(): LiveData<Resource<List<Tourism>>> =
+    override fun getAllTourism(): LiveData<Resource<List<Tourism>>> =
 
         // object to manage the flow of data betweek network & local storage
         object : NetworkBoundResource<List<Tourism>, List<TourismResponse>>(appExecutors) {
@@ -64,7 +65,7 @@ class TourismRepository private constructor(
 
     // get favorite `tourism` list
     // use `domain` to be `presented`
-    fun getFavoriteTourism(): LiveData<List<Tourism>> {
+    override fun getFavoriteTourism(): LiveData<List<Tourism>> {
         return Transformations.map(localDataSource.getFavoriteTourism()) {
             DataMapper.mapEntitiesToDomain(it)
         }
@@ -72,7 +73,7 @@ class TourismRepository private constructor(
 
     // set favorite `tourism`
     // use `entity` to be sent to `DAO`
-    fun setFavoriteTourism(tourism: Tourism, state: Boolean) {
+    override fun setFavoriteTourism(tourism: Tourism, state: Boolean) {
         val tourismEntity = DataMapper.mapDomainToEntity(tourism)
         appExecutors.diskIO().execute { localDataSource.setFavoriteTourism(tourismEntity, state) }
     }
