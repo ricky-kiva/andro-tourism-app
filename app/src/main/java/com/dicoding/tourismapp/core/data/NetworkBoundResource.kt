@@ -9,9 +9,51 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 
 abstract class NetworkBoundResource<ResultType, RequestType>(private val mExecutors: AppExecutors) {
 
+    private var result: Flow<Resource<ResultType>> = flow {
+        emit(Resource.Loading())
+        val dbSource = loadFromDB().first() // get only first data flow from loadFromDB
+        if (shouldFetch(dbSource)) {
+            emit(Resource.Loading())
+            when (val apiResponse = createCall().first()) { // assign first data from createCall() as apiResponse
+                is ApiResponse.Success -> {
+                    saveCallResult(apiResponse.data)
+                    emitAll(loadFromDB().map { Resource.Success(it) }) // emit all items of DB
+                }
+                is  ApiResponse.Empty -> {
+                    emitAll(loadFromDB().map { Resource.Success(it)})
+                }
+                is ApiResponse.Error -> {
+                    onFetchFailed()
+                    emit(Resource.Error<ResultType>(apiResponse.errorMessage))
+                }
+            }
+        } else {
+            emitAll(loadFromDB().map { Resource.Success(it) })
+        }
+    }
+
+    protected open fun onFetchFailed() {}
+
+    // `abstract functions` is being a template when the `abstract class` is called
+    protected abstract fun loadFromDB(): Flow<ResultType>
+
+    protected abstract fun shouldFetch(data: ResultType?): Boolean
+
+    protected abstract suspend fun createCall(): Flow<ApiResponse<RequestType>>
+
+    protected abstract suspend fun saveCallResult(data: RequestType)
+
+    fun asFlow(): Flow<Resource<ResultType>> = result
+
+    /* RxJava
     private val result = PublishSubject.create<Resource<ResultType>>()
     private val mCompositeDisposable = CompositeDisposable()
 
@@ -32,8 +74,6 @@ abstract class NetworkBoundResource<ResultType, RequestType>(private val mExecut
             }
         mCompositeDisposable.add(db)
     }
-
-    protected open fun onFetchFailed() {}
 
     // `abstract functions` is being a template when the `abstract class` is called
     protected abstract fun loadFromDB(): Flowable<ResultType>
@@ -91,5 +131,5 @@ abstract class NetworkBoundResource<ResultType, RequestType>(private val mExecut
         mCompositeDisposable.add(response)
     }
 
-    fun asFlowable(): Flowable<Resource<ResultType>> = result.toFlowable(BackpressureStrategy.BUFFER)
+    fun asFlowable(): Flowable<Resource<ResultType>> = result.toFlowable(BackpressureStrategy.BUFFER)*/
 }
