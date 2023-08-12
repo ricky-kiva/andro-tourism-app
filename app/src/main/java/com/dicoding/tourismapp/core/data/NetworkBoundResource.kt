@@ -1,78 +1,95 @@
 package com.dicoding.tourismapp.core.data
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
+import android.annotation.SuppressLint
 import com.dicoding.tourismapp.core.data.source.remote.network.ApiResponse
-
 import com.dicoding.tourismapp.core.utils.AppExecutors
+import io.reactivex.BackpressureStrategy
+import io.reactivex.Flowable
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.PublishSubject
 
 abstract class NetworkBoundResource<ResultType, RequestType>(private val mExecutors: AppExecutors) {
 
-    private val result = MediatorLiveData<Resource<ResultType>>()
+    private val result = PublishSubject.create<Resource<ResultType>>()
+    private val mCompositeDisposable = CompositeDisposable()
 
     init {
-        result.value = Resource.Loading(null)
-
         @Suppress("LeakingThis")
         val dbSource = loadFromDB()
-
-        result.addSource(dbSource) { data -> // observe data change in `dbSource`
-            result.removeSource(dbSource) // remove observer after there is single change on `dbSource`
-            if (shouldFetch(data)) { // if `shouldFetch()` is true, get data from network
-                fetchFromNetwork(dbSource)
-            } else { // else, get data using `loadFromDB()` local data source
-                result.addSource(dbSource) { newData ->
-                    result.value = Resource.Success(newData)
+        val db = dbSource
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .take(1)
+            .subscribe { value ->
+                dbSource.unsubscribeOn(Schedulers.io()) // GPT says it's not necessary because it will finish its work after subscribe is done
+                if (shouldFetch(value)) {
+                    fetchFromNetwork()
+                } else {
+                    result.onNext(Resource.Success(value))
                 }
             }
-        }
+        mCompositeDisposable.add(db)
     }
 
     protected open fun onFetchFailed() {}
 
     // `abstract functions` is being a template when the `abstract class` is called
-    protected abstract fun loadFromDB(): LiveData<ResultType>
+    protected abstract fun loadFromDB(): Flowable<ResultType>
 
     protected abstract fun shouldFetch(data: ResultType?): Boolean
 
-    protected abstract fun createCall(): LiveData<ApiResponse<RequestType>>
+    protected abstract fun createCall(): Flowable<ApiResponse<RequestType>>
 
     protected abstract fun saveCallResult(data: RequestType)
 
-    private fun fetchFromNetwork(dbSource: LiveData<ResultType>) {
+    @SuppressLint("CheckResult")
+    private fun fetchFromNetwork() {
 
         val apiResponse = createCall()
 
-        result.addSource(dbSource) { newData ->
-            result.value = Resource.Loading(newData)
-        }
-        result.addSource(apiResponse) { response ->
-            result.removeSource(apiResponse)
-            result.removeSource(dbSource)
-            when (response) {
-                is ApiResponse.Success ->
-                    mExecutors.diskIO().execute {
+        result.onNext(Resource.Loading(null))
+        val response = apiResponse
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .take(1)
+            .doOnComplete {
+                mCompositeDisposable.dispose()
+            }
+            .subscribe { response ->
+                when(response) {
+                    is ApiResponse.Success -> {
                         saveCallResult(response.data)
-                        mExecutors.mainThread().execute {
-                            result.addSource(loadFromDB()) { newData ->
-                                result.value = Resource.Success(newData)
+                        val dbSource = loadFromDB()
+                        dbSource
+                            .subscribeOn(Schedulers.computation())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .take(1)
+                            .subscribe {
+                                dbSource.unsubscribeOn(Schedulers.io()) // GPT says it's not necessary because it will finish its work after subscribe is done
+                                result.onNext(Resource.Success(it))
                             }
-                        }
                     }
-                is ApiResponse.Empty -> mExecutors.mainThread().execute {
-                    result.addSource(loadFromDB()) { newData ->
-                        result.value = Resource.Success(newData)
+                    is ApiResponse.Empty -> {
+                        val dbSource = loadFromDB()
+                        dbSource
+                            .subscribeOn(Schedulers.computation())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .take(1)
+                            .subscribe {
+                                dbSource.unsubscribeOn(Schedulers.io()) // GPT says it's not necessary because it will finish its work after subscribe is done
+                                result.onNext(Resource.Success(it))
+                            }
                     }
-                }
-                is ApiResponse.Error -> {
-                    onFetchFailed()
-                    result.addSource(dbSource) { newData ->
-                        result.value = Resource.Error(response.errorMessage, newData)
+                    is ApiResponse.Error -> {
+                        onFetchFailed()
+                        result.onNext(Resource.Error(response.errorMessage, null))
                     }
                 }
             }
-        }
+        mCompositeDisposable.add(response)
     }
 
-    fun asLiveData(): LiveData<Resource<ResultType>> = result
+    fun asFlowable(): Flowable<Resource<ResultType>> = result.toFlowable(BackpressureStrategy.BUFFER)
 }
