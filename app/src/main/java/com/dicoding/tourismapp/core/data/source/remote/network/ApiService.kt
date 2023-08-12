@@ -5,6 +5,12 @@ import io.reactivex.Flowable
 import retrofit2.http.GET
 
 interface ApiService {
+
     @GET("list")
-    fun getList(): Flowable<ListTourismResponse> // remote data is Flowable
+    suspend fun getList(): ListTourismResponse // use suspend to indicate the function could be safely called from coroutine
+    // suspend also needed to transform network responses to `Flow`
+
+    /* RxJava
+    @GET("list")
+    fun getList(): Flowable<ListTourismResponse> // remote data is Flowable*/
 }

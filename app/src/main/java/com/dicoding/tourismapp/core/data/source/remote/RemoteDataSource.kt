@@ -13,9 +13,14 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import retrofit2.Call
 import retrofit2.Response
 import retrofit2.Callback
+import java.lang.Exception
 
 class RemoteDataSource private constructor(private val apiService: ApiService) {
     companion object {
@@ -28,6 +33,24 @@ class RemoteDataSource private constructor(private val apiService: ApiService) {
             }
     }
 
+    suspend fun getAllTourism(): Flow<ApiResponse<List<TourismResponse>>> {
+        return flow { // build a new `flow`
+            try { // response handling using try-catch
+                val response = apiService.getList()
+                val dataArray = response.places
+                if (dataArray.isNotEmpty()) {
+                    emit(ApiResponse.Success(response.places))
+                } else {
+                    emit(ApiResponse.Empty)
+                }
+            } catch (e: Exception) {
+                emit(ApiResponse.Error(e.toString()))
+                Log.e("RemoteDataSource", e.toString())
+            }
+        }.flowOn(Dispatchers.IO) // do `flow`'s work on `Dispatchers.IO`
+    }
+
+    /* RxJava
     @SuppressLint("CheckResult")
     fun getAllTourism(): Flowable<ApiResponse<List<TourismResponse>>> {
         // create Subject. it emit everytime there is new data to none/multiple observer (hot stream)
@@ -50,6 +73,6 @@ class RemoteDataSource private constructor(private val apiService: ApiService) {
 
         // convert to Flowable & will buffer the data in memory if consumer slow to process them
         return resultData.toFlowable(BackpressureStrategy.BUFFER)
-    }
+    }*/
 }
 
