@@ -16,11 +16,11 @@ abstract class NetworkBoundResource<ResultType, RequestType>(private val mExecut
         @Suppress("LeakingThis")
         val dbSource = loadFromDB()
 
-        result.addSource(dbSource) { data ->
-            result.removeSource(dbSource)
-            if (shouldFetch(data)) {
+        result.addSource(dbSource) { data -> // observe data change in `dbSource`
+            result.removeSource(dbSource) // remove observer after there is single change on `dbSource`
+            if (shouldFetch(data)) { // if `shouldFetch()` is true, get data from network
                 fetchFromNetwork(dbSource)
-            } else {
+            } else { // else, get data using `loadFromDB()` local data source
                 result.addSource(dbSource) { newData ->
                     result.value = Resource.Success(newData)
                 }
@@ -30,6 +30,7 @@ abstract class NetworkBoundResource<ResultType, RequestType>(private val mExecut
 
     protected open fun onFetchFailed() {}
 
+    // `abstract functions` is being a template when the `abstract class` is called
     protected abstract fun loadFromDB(): LiveData<ResultType>
 
     protected abstract fun shouldFetch(data: ResultType?): Boolean
