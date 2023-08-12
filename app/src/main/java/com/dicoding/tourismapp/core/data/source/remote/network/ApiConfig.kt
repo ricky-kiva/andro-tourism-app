@@ -13,7 +13,7 @@ object ApiConfig {
         val retrofit = Retrofit.Builder()
             .baseUrl("https://tourism-api.dicoding.dev/")
             .addConverterFactory(GsonConverterFactory.create())
-            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create()) // to allow remote data be Flowable
             .client(provideOkHttpClient())
             .build()
         return retrofit.create(ApiService::class.java)

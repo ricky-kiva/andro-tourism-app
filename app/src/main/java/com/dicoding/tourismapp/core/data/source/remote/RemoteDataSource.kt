@@ -30,23 +30,25 @@ class RemoteDataSource private constructor(private val apiService: ApiService) {
 
     @SuppressLint("CheckResult")
     fun getAllTourism(): Flowable<ApiResponse<List<TourismResponse>>> {
+        // create Subject. it emit everytime there is new data to none/multiple observer (hot stream)
         val resultData = PublishSubject.create<ApiResponse<List<TourismResponse>>>()
 
         val client = apiService.getList()
 
         //get data from remote network
         client
-            .subscribeOn(Schedulers.computation())
-            .observeOn(AndroidSchedulers.mainThread())
-            .take(1)
+            .subscribeOn(Schedulers.computation()) // send data using computation (for high CPU usage)
+            .observeOn(AndroidSchedulers.mainThread()) // get data on main thread
+            .take(1) // take the first data caught
             .subscribe({ response ->
                 val dataArray = response.places
                 resultData.onNext(if (dataArray.isNotEmpty()) ApiResponse.Success(dataArray) else ApiResponse.Empty)
             }, { error ->
                 resultData.onNext(ApiResponse.Error(error.message.toString()))
                 Log.e("RemoteDataSource", error.toString())
-            })
+            }) // process the caught data
 
+        // convert to Flowable & will buffer the data in memory if consumer slow to process them
         return resultData.toFlowable(BackpressureStrategy.BUFFER)
     }
 }
