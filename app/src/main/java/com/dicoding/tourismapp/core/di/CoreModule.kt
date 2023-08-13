@@ -58,11 +58,11 @@ val repositoryModule = module {
 }
 
 val useCaseModule = module {
-    factory<TourismUseCase> { TourismInteractor(get()) }
+    factory<TourismUseCase> { TourismInteractor(get()) } // provide `TourismUseCase` to `TourismInteractor` using `single<>`
 }
 
 val viewModelModule = module {
-    viewModel { HomeViewModel(get()) }
+    viewModel { HomeViewModel(get()) } // configure ViewModelFactory automatically using `koin-android-viewmodel` library
     viewModel { FavoriteViewModel(get()) }
     viewModel { DetailTourismViewModel(get()) }
 }
