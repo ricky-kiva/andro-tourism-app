@@ -9,6 +9,8 @@ import java.util.concurrent.TimeUnit
 
 object ApiConfig {
 
+    /* ANNOUNCEMENT: UNUSED AFTER [DEPENDENCY INJECTION] */
+
     fun provideApiService(): ApiService {
         val retrofit = Retrofit.Builder()
             .baseUrl("https://tourism-api.dicoding.dev/")
