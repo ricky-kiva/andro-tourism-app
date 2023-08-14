@@ -3,7 +3,6 @@ package com.dicoding.tourismapp.core.domain.usecase
 import com.dicoding.tourismapp.core.data.Resource
 import com.dicoding.tourismapp.core.domain.model.Tourism
 import com.dicoding.tourismapp.core.domain.repository.ITourismRepository
-import io.reactivex.Flowable
 import kotlinx.coroutines.flow.Flow
 
 class TourismInteractor(private val tourismRepository: ITourismRepository): TourismUseCase {

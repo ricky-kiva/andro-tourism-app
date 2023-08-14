@@ -2,8 +2,6 @@ package com.dicoding.tourismapp.core.data.source.local.room
 
 import androidx.room.*
 import com.dicoding.tourismapp.core.data.source.local.entity.TourismEntity
-import io.reactivex.Completable
-import io.reactivex.Flowable
 import kotlinx.coroutines.flow.Flow
 
 @Dao

@@ -7,16 +7,10 @@ import com.dicoding.tourismapp.core.data.source.local.room.TourismDatabase
 import com.dicoding.tourismapp.core.data.source.remote.RemoteDataSource
 import com.dicoding.tourismapp.core.data.source.remote.network.ApiService
 import com.dicoding.tourismapp.core.domain.repository.ITourismRepository
-import com.dicoding.tourismapp.core.domain.usecase.TourismInteractor
-import com.dicoding.tourismapp.core.domain.usecase.TourismUseCase
 import com.dicoding.tourismapp.core.utils.AppExecutors
-import com.dicoding.tourismapp.detail.DetailTourismViewModel
-import com.dicoding.tourismapp.favorite.FavoriteViewModel
-import com.dicoding.tourismapp.home.HomeViewModel
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.android.ext.koin.androidContext
-import org.koin.android.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -55,14 +49,4 @@ val repositoryModule = module {
     single { RemoteDataSource(get()) }
     factory { AppExecutors() }
     single<ITourismRepository> { TourismRepository(get(), get(), get()) } // use `<ITourismRepository>` because `TourismRepository` extends `ITourismRepository`
-}
-
-val useCaseModule = module {
-    factory<TourismUseCase> { TourismInteractor(get()) } // provide `TourismUseCase` to `TourismInteractor` using `single<>`
-}
-
-val viewModelModule = module {
-    viewModel { HomeViewModel(get()) } // configure ViewModelFactory automatically using `koin-android-viewmodel` library
-    viewModel { FavoriteViewModel(get()) }
-    viewModel { DetailTourismViewModel(get()) }
 }
