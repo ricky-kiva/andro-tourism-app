@@ -1,3 +1,4 @@
+// share dependencies between modules
 dependencies {
     implementation "androidx.appcompat:appcompat:$appcompat_version"
     implementation "androidx.core:core-ktx:$core_ktx_version"
