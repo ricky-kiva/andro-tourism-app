@@ -6,6 +6,7 @@ import android.view.View
 import com.dicoding.tourismapp.core.data.Resource
 import com.dicoding.tourismapp.maps.databinding.ActivityMapsBinding
 import org.koin.android.viewmodel.ext.android.viewModel
+import org.koin.core.context.loadKoinModules
 
 class MapsActivity : AppCompatActivity() {
 
@@ -17,6 +18,8 @@ class MapsActivity : AppCompatActivity() {
 
         binding = ActivityMapsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        loadKoinModules(mapsModule) // call `mapsModule` manually (to prevent inverted dependeny injection caused by "dynamic feature")
 
         supportActionBar?.title = "Tourism Map"
 
@@ -30,7 +33,7 @@ class MapsActivity : AppCompatActivity() {
                     is Resource.Loading -> binding.progressBar.visibility = View.VISIBLE
                     is Resource.Success -> {
                         binding.progressBar.visibility = View.GONE
-                        binding.tvMaps.text = "This is map of ${tourism.data?.get(0)?.name}"
+                        binding.tvMaps.text = "This is map of ${tourism.data?.get(0)?.name}" // get first data of all tourism data
                     }
                     is Resource.Error -> {
                         binding.progressBar.visibility = View.GONE

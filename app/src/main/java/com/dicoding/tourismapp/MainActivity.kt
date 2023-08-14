@@ -1,5 +1,7 @@
 package com.dicoding.tourismapp
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.Toast
@@ -56,7 +58,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 title = getString(R.string.menu_favorite)
             }
             R.id.nav_map -> {
-                Toast.makeText(this, "Coming soon", Toast.LENGTH_SHORT).show()
+                val uri = Uri.parse("tourismapp://maps") // "scheme://host" defined in `AndroidManifest`
+                startActivity(Intent(Intent.ACTION_VIEW, uri)) // `ACTION_VIEW` to search appropriate app to open `URI`
             }
         }
         if (fragment != null) {
