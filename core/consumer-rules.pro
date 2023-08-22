@@ -1,3 +1,7 @@
+##---------------Begin: proguard configuration for Dynamic Features ----------
+-keep class kotlin.** { *; }
+
+
 ##---------------Begin: proguard configuration for SQLCipher  ----------
 -keep,includedescriptorclasses class net.sqlcipher.** { *; }
 -keep,includedescriptorclasses interface net.sqlcipher.** { *; }
