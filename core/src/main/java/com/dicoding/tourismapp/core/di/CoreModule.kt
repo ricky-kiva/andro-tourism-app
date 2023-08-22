@@ -17,6 +17,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 import net.sqlcipher.database.SQLiteDatabase
 import net.sqlcipher.database.SupportFactory
+import okhttp3.CertificatePinner
 
 val databaseModule = module {
     factory { get<TourismDatabase>().tourismDao() } // get<TourismDatabase> retrieve TourismDatabase instance from `single`
@@ -35,10 +36,17 @@ val databaseModule = module {
 
 val networkModule = module {
     single {
+        val hostname = "tourism-api.dicoding.dev"
+        val certificatePinner = CertificatePinner.Builder()
+            .add(hostname, "sha256/0BFUiL2XBR0AUiH9cwvtU7vw+erNN1BIHCGPBI4QC9U=") // get it from `https://www.ssllabs.com/ssltest`
+            .add(hostname, "sha256/jQJTbIh0grw0/1TkHSumWb+Fs0Ggogr621gT3PvPKG0=")
+            .add(hostname, "sha256/C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=")
+            .build()
         OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
             .connectTimeout(120, TimeUnit.SECONDS)
             .readTimeout(120, TimeUnit.SECONDS)
+            .certificatePinner(certificatePinner) // add certificatePinner to OkHttpClient
             .build()
     }
     single {
