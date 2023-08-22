@@ -15,14 +15,21 @@ import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
+import net.sqlcipher.database.SQLiteDatabase
+import net.sqlcipher.database.SupportFactory
 
 val databaseModule = module {
     factory { get<TourismDatabase>().tourismDao() } // get<TourismDatabase> retrieve TourismDatabase instance from `single`
     single { // single means it defines a "singleton"
+        val passphrase: ByteArray = SQLiteDatabase.getBytes("dicoding".toCharArray()) // create passphrase as ByteArray for database encryption
+        val factory = SupportFactory(passphrase) // configure database encryption setting by making SupportFactory
         Room.databaseBuilder(
             androidContext(),
             TourismDatabase::class.java, "Tourism.db"
-        ).fallbackToDestructiveMigration().build()
+        )
+            .fallbackToDestructiveMigration()
+            .openHelperFactory(factory) // enable database encryption with variable `factory` that has been made
+            .build()
     } // don't need to write `single<TourismDatabase> {...}` because it's clear that the returned instance of `TourismDatabase` is `Room.databaseBuilder()`
 }
 
