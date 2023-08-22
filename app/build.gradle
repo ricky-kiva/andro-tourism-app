@@ -51,4 +51,7 @@ dependencies {
     implementation project(":core") // import Core module
     implementation fileTree(dir: 'libs', include: ['*.jar']) // add external JAR that dev is manually added on 'libs' directory of the project
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version" // adds Kotlin JDK 7 standard library (collections, string manipulation, null safety, etc)
+
+    // Lottie animation
+    implementation "com.airbnb.android:lottie:$lottie_version"
 }
