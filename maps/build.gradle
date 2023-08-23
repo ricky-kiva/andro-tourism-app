@@ -10,9 +10,14 @@ apply from: '../shared_dependencies.gradle'
 android {
     compileSdkVersion 33
 
+    def Properties properties = new Properties()
+    properties.load(project.rootProject.file("local.properties").newDataInputStream())
+
     defaultConfig {
         minSdkVersion 16
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        resValue "string", "maps_public_token", properties.getProperty("maps.public.token", "")
     }
 
     compileOptions {
@@ -34,4 +39,8 @@ dependencies {
     implementation project(":app")
     implementation project(":core")
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+
+    // Mapbox maps
+    implementation "com.mapbox.mapboxsdk:mapbox-android-sdk:$mapbox_version"
+    implementation "com.mapbox.mapboxsdk:mapbox-android-plugin-annotation-v9:$mapbox_annotation_version"
 }
