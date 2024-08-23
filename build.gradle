@@ -39,8 +39,23 @@ buildscript {
     ext.mapbox_version = "9.2.0"
     ext.mapbox_annotation_version = "0.8.0"
 
-    Properties props = new Properties()
-    props.load(new FileInputStream(new File('local.properties')))
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.1.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+Properties props = new Properties()
+props.load(new FileInputStream(new File(rootProject.projectDir, "local.properties")))
+
+allprojects {
     repositories {
         google()
         mavenCentral()
@@ -52,21 +67,6 @@ buildscript {
                 password = props['mapbox.downloads.token']
             }
         }
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.2'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
-    }
-}
-
-allprojects {
-    repositories {
-        google()
-        jcenter()
-        
     }
 }
 
